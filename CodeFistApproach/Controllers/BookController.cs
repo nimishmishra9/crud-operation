@@ -1,5 +1,6 @@
 ﻿// BooksController.cs
 using CodeFistApproach.Models;
+using CodeFistApproach.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,92 +8,77 @@ using Microsoft.EntityFrameworkCore;
 [ApiController]
 public class BooksController : ControllerBase
 {
-    //private readonly YourDbContext _context;
+    private readonly IBooksService _booksService;
 
-    //public BooksController(YourDbContext context)
-    //{
-    //    _context = context;
-    //}
+    public BooksController(IBooksService booksService)
+    {
+        _booksService = booksService;
+    }
 
-    //// GET: api/Books
-    //[HttpGet]
-    //public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
-    //{
-    //    return await _context.Books.ToListAsync();
-    //}
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Book>>> GetBooks()
+    {
+        return await _booksService.GetBooks();
+    }
 
-    //// GET: api/Books/5
-    //[HttpGet("{id}")]
-    //public async Task<ActionResult<Book>> GetBook(int id)
-    //{
-    //    var book = await _context.Books.FindAsync(id);
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Book>> GetBook(int id)
+    {
+        var book = await _booksService.GetBook(id); 
 
-    //    if (book == null)
-    //    {
-    //        return NotFound();
-    //    }
+        if (book == null)
+        {
+            return NotFound();
+        }
+        return book;
+    }
 
-    //    return book;
-    //}
+    [HttpPost]
+    public async Task<ActionResult<Book>> PostBook(Book book)
+    {
+        await _booksService.PostBook(book); 
+        return CreatedAtAction("GetBook", new { id = book.Id }, book);
+    }
 
-    //// POST: api/Books
-    //[HttpPost]
-    //public async Task<ActionResult<Book>> PostBook(Book book)
-    //{
-    //    _context.Books.Add(book);
-    //    await _context.SaveChangesAsync();
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutBook(int id, Book book)
+    {
+        if (id != book.Id)
+        {
+            return BadRequest();
+        }
+        try
+        {
+            await _booksService.PutBook(id, book);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!BookExists(id))
+            {
+                return NotFound();
+            }
+            else
+            {
+                throw;
+            }
+        }
+        return NoContent();
+    }
 
-    //    return CreatedAtAction("GetBook", new { id = book.Id }, book);
-    //}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteBook(int id)
+    {
+        var book = await _booksService.GetBook(id);
+        if (book.Value == null)
+        {
+            return NotFound();
+        }
+        await _booksService.DeleteBook(id);   
+        return NoContent();
+    }
 
-    //// PUT: api/Books/5
-    //[HttpPut("{id}")]
-    //public async Task<IActionResult> PutBook(int id, Book book)
-    //{
-    //    if (id != book.Id)
-    //    {
-    //        return BadRequest();
-    //    }
-
-    //    _context.Entry(book).State = EntityState.Modified;
-
-    //    try
-    //    {
-    //        await _context.SaveChangesAsync();
-    //    }
-    //    catch (DbUpdateConcurrencyException)
-    //    {
-    //        if (!BookExists(id))
-    //        {
-    //            return NotFound();
-    //        }
-    //        else
-    //        {
-    //            throw;
-    //        }
-    //    }
-
-    //    return NoContent();
-    //}
-
-    //// DELETE: api/Books/5
-    //[HttpDelete("{id}")]
-    //public async Task<IActionResult> DeleteBook(int id)
-    //{
-    //    var book = await _context.Books.FindAsync(id);
-    //    if (book == null)
-    //    {
-    //        return NotFound();
-    //    }
-
-    //    _context.Books.Remove(book);
-    //    await _context.SaveChangesAsync();
-
-    //    return NoContent();
-    //}
-
-    //private bool BookExists(int id)
-    //{
-    //    return _context.Books.Any(e => e.Id == id);
-    //}
+    private bool BookExists(int id)
+    {
+        return _booksService.BookExists(id);    
+    }
 }

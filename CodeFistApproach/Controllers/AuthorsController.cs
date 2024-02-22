@@ -1,5 +1,6 @@
 ﻿using CodeFistApproach.Models;
 using CodeFistApproach.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,7 +16,7 @@ namespace CodeFistApproach.Controllers
             _authorsService = authorsService;
         }
 
-        //[HttpGet]
+        [HttpGet]
         public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
         {
             return await _authorsService.GetAuthors();
@@ -35,7 +36,7 @@ namespace CodeFistApproach.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Author>>PostAuthor(Author author)
+        public async Task<ActionResult<Author>>PostAuthor([FromQuery] Author author)
         {
             await _authorsService.PostAuthor(author);
             return CreatedAtAction("GetAuthor", new { id = author.Id }, author);
@@ -73,7 +74,7 @@ namespace CodeFistApproach.Controllers
         public async Task<IActionResult> DeleteAuthor(int id)
         {
             var author = await _authorsService.GetAuthor(id);
-            if (author == null)
+            if (author.Value == null)
             {
                 return NotFound();
             }
